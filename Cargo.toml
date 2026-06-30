@@ -1,0 +1,8 @@
+[package]
+name = "nero"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+uefi = { version = "0.38", features = ["panic_handler",  "global_allocator"] }
+spin = "0.9"
