@@ -1,8 +1,12 @@
 #![no_main]
 #![no_std]
 
+
+mod lsdisk;
+
 extern crate alloc;
 
+use crate::lsdisk::{list_disks};
 use alloc::collections::VecDeque;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -135,11 +139,14 @@ fn parse_commands(input: String) {
     match parts[0] {
         "hostname" if parts.len() >= 2 && parts[1] == "set" && parts.len() >= 3 => {
             *HOSTNAME.lock() = String::from(parts[2]);
-            uefi::println!("hostname set: {}", HOSTNAME.lock());
+            uefi::println!("Hostname set successfully: {}", HOSTNAME.lock());
         }
         "hostname" if parts.len() >= 2 && parts[1] == "get" => {
-            uefi::println!("hostname is: {}", HOSTNAME.lock());
+            uefi::println!("Current hostname: {}", HOSTNAME.lock());
         }
-        _ => uefi::println!("input: {:?}", parts),
+        "lsdisk" => {
+            list_disks().unwrap();
+        }
+        _ => uefi::println!("Unknown command: {}", parts[0])
     }
 }
