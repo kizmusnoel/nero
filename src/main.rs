@@ -81,11 +81,10 @@ fn read_line() -> Option<String> {
                 return None;
             }
             Ok(Some(Key::Special(ScanCode::UP))) => {
-                if buffer.len() != 0 {
-                    for _ in 0..buffer.len() {
-                        uefi::print!("\u{8} \u{8}");
-                    }
+                for _ in 0..buffer.len() {
+                    uefi::print!("\u{8} \u{8}");
                 }
+                buffer = String::new();
 
                 if let Some(last) = COMMAND_HISTORY.lock().pop_back() {
                     buffer = last.clone();
