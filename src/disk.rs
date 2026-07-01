@@ -28,8 +28,9 @@ pub fn list_disks() -> uefi::Result {
         let media = block_io.media();
 
         uefi::println!(
-            "[{}] size={} blocks  block_size={}  removable={} partition={}",
+            "[{}]  formatted_size={:.3} GB,  size={} blocks,  block_size={},  removable={},  PARTITION={}",
             i,
+            media.last_block() as f64 / 1024.0 / 1024.0 / 1024.0 * media.block_size() as f64,
             media.last_block(),
             media.block_size(),
             media.is_removable_media(),
