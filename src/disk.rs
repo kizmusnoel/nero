@@ -1,13 +1,10 @@
-extern crate alloc;
-use uefi::boot;
-use uefi::proto::media::block::BlockIO;
-use uefi::boot::{OpenProtocolAttributes, OpenProtocolParams};
 use uefi::Identify;
-
+use uefi::boot;
+use uefi::boot::{OpenProtocolAttributes, OpenProtocolParams};
+use uefi::proto::media::block::BlockIO;
 
 pub fn list_disks() -> uefi::Result {
     let handles = boot::locate_handle_buffer(boot::SearchType::ByProtocol(&BlockIO::GUID))?;
-
     for (i, handle) in handles.iter().enumerate() {
         let block_io = unsafe {
             boot::open_protocol::<BlockIO>(
@@ -31,13 +28,12 @@ pub fn list_disks() -> uefi::Result {
         let media = block_io.media();
 
         uefi::println!(
-            "[{}] size={} blocks  block_size={}  removable={} partition={} media_id={}",
+            "[{}] size={} blocks  block_size={}  removable={} partition={}",
             i,
             media.last_block(),
             media.block_size(),
             media.is_removable_media(),
-            media.is_logical_partition(),
-            media.media_id()
+            media.is_logical_partition()
         );
     }
 
@@ -46,7 +42,12 @@ pub fn list_disks() -> uefi::Result {
 
 pub fn get_disk_handle(index: usize) -> uefi::Result<uefi::Handle> {
     let handles = boot::locate_handle_buffer(boot::SearchType::ByProtocol(&BlockIO::GUID))?;
-    Ok(handles[index])
+
+    if index >= handles.len() {
+        Err(uefi::Status::NOT_FOUND.into())
+    } else {
+        Ok(handles[index])
+    }
 }
 
 pub fn read_sector(handle: uefi::Handle, lba: u64) -> uefi::Result<[u8; 512]> {
@@ -66,4 +67,31 @@ pub fn write_sector(handle: uefi::Handle, lba: u64, data: &[u8; 512]) -> uefi::R
     block_io.write_blocks(media_id, lba, data)?;
 
     Ok(())
+}
+
+pub fn print_sector(sector: &[u8; 512]) {
+    for row in 0..(512 / 16) {
+        let offset = row * 16;
+        let chunk = &sector[offset..offset + 16];
+
+        // offset
+        uefi::print!("{:04x}  ", offset);
+
+        // hex bytes
+        for byte in chunk {
+            uefi::print!("{:02x} ", byte);
+        }
+        uefi::print!(" ");
+
+        // ascii
+        for byte in chunk {
+            let c = if *byte >= 0x20 && *byte < 0x7f {
+                *byte as char
+            } else {
+                '.'
+            };
+            uefi::print!("{}", c);
+        }
+        uefi::println!();
+    }
 }
